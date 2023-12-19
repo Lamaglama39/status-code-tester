@@ -3,25 +3,15 @@ from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
-
-@app.get("/information/{status_code}")
-async def information(status_code: int = Path(..., description="ステータスコード")):
-    messages = {
+# ステータスコードメッセージを定義
+STATUS_MESSAGES = {
+    "information": {
         100: "Continue",
         101: "Switching Protocols",
         102: "Processing",
         103: "Early Hints",
-    }
-
-    if status_code in messages:
-        return JSONResponse(status_code=status_code, content={"status_code": status_code, "message": messages[status_code]})
-    else:
-        raise HTTPException(status_code=404, detail="不正なステータスコード")
-
-
-@app.get("/successful/{status_code}")
-async def successful(status_code: int = Path(..., description="ステータスコード")):
-    messages = {
+    },
+    "successful": {
         200: "OK",
         201: "Created",
         202: "Accepted",
@@ -32,17 +22,8 @@ async def successful(status_code: int = Path(..., description="ステータス�
         207: "Multi-Status",
         208: "Already Reported",
         226: "IM Used",
-    }
-
-    if status_code in messages:
-        return JSONResponse(status_code=status_code, content={"status_code": status_code, "message": messages[status_code]})
-    else:
-        raise HTTPException(status_code=404, detail="不正なステータスコード")
-
-
-@app.get("/redirection/{status_code}")
-async def redirection(status_code: int = Path(..., description="ステータスコード")):
-    messages = {
+    },
+    "redirection": {
         300: "Multiple Choices",
         301: "Moved Permanently",
         302: "Found",
@@ -50,17 +31,8 @@ async def redirection(status_code: int = Path(..., description="ステータス�
         304: "Not Modified",
         307: "Temporary Redirect",
         308: "Permanent Redirect",
-    }
-
-    if status_code in messages:
-        return JSONResponse(status_code=status_code, content={"status_code": status_code, "message": messages[status_code]})
-    else:
-        raise HTTPException(status_code=404, detail="不正なステータスコード")
-
-
-@app.get("/client_error/{status_code}")
-async def client_error(status_code: int = Path(..., description="ステータスコード")):
-    messages = {
+    },
+    "client_error": {
         400: "Bad Request",
         401: "Unauthorized",
         402: "Payment Required",
@@ -90,17 +62,8 @@ async def client_error(status_code: int = Path(..., description="ステータス
         429: "Too Many Requests",
         431: "Request Header Fields Too Large",
         451: "Unavailable For Legal Reasons",
-    }
-
-    if status_code in messages:
-        return JSONResponse(status_code=status_code, content={"status_code": status_code, "message": messages[status_code]})
-    else:
-        raise HTTPException(status_code=404, detail="不正なステータスコード")
-
-
-@app.get("/server_error/{status_code}")
-async def server_error(status_code: int = Path(..., description="ステータスコード")):
-    messages = {
+    },
+    "server_error": {
         500: "Internal Server Error",
         501: "Not Implemented",
         502: "Bad Gateway",
@@ -112,9 +75,37 @@ async def server_error(status_code: int = Path(..., description="ステータス
         508: "Loop Detected",
         510: "Not Extended",
         511: "Network Authentication Required",
-    }
+    },
+}
 
-    if status_code in messages:
+
+async def get_status_message(category: str, status_code: int):
+    messages = STATUS_MESSAGES.get(category)
+    if messages and status_code in messages:
         return JSONResponse(status_code=status_code, content={"status_code": status_code, "message": messages[status_code]})
-    else:
-        raise HTTPException(status_code=404, detail="不正なステータスコード")
+    raise HTTPException(status_code=404, detail="不正なステータスコード")
+
+
+@app.get("/information/{status_code}")
+async def information(status_code: int = Path(..., description="ステータスコード")):
+    return await get_status_message("information", status_code)
+
+
+@app.get("/successful/{status_code}")
+async def successful(status_code: int = Path(..., description="ステータスコード")):
+    return await get_status_message("successful", status_code)
+
+
+@app.get("/redirection/{status_code}")
+async def redirection(status_code: int = Path(..., description="ステータスコード")):
+    return await get_status_message("redirection", status_code)
+
+
+@app.get("/client_error/{status_code}")
+async def client_error(status_code: int = Path(..., description="ステータスコード")):
+    return await get_status_message("client_error", status_code)
+
+
+@app.get("/server_error/{status_code}")
+async def server_error(status_code: int = Path(..., description="ステータスコード")):
+    return await get_status_message("server_error", status_code)
